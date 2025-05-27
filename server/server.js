@@ -3,8 +3,8 @@ import "dotenv/config";
 import cors from "cors";
 import { connectDB } from "./configs/db.js";
 import { clerkMiddleware } from "@clerk/express";
+import getRawBody from "raw-body"; // Add this
 import clerkWebhooks from "./controllers/clerkWebhooks.js";
-import bodyParser from "body-parser";
 
 connectDB();
 const app = express();
@@ -14,10 +14,17 @@ app.use(cors());
 // Middleware for Clerk Authentication (for non-webhook routes)
 app.use(clerkMiddleware());
 
-// Raw body parser for Clerk Webhooks (required for svix verification)
-app.post("/api/clerk", bodyParser.raw({ type: "*/*" }), clerkWebhooks);
+// Middleware to get raw body for Clerk Webhook (must come BEFORE express.json())
+app.post("/api/clerk", async (req, res, next) => {
+  try {
+    req.rawBody = (await getRawBody(req)).toString("utf8");
+    next();
+  } catch (err) {
+    next(err);
+  }
+}, clerkWebhooks);
 
-// JSON parser for other routes
+// JSON parser for other routes (must come AFTER webhook route)
 app.use(express.json());
 
 // Default route
