@@ -1,25 +1,32 @@
 import express from "express";
-import "dotenv/config"
+import "dotenv/config";
 import cors from "cors";
 import { connectDB } from "./configs/db.js";
-import { clerkMiddleware } from '@clerk/express'
+import { clerkMiddleware } from "@clerk/express";
 import clerkWebhooks from "./controllers/clerkWebhooks.js";
+import bodyParser from "body-parser";
+
 connectDB();
-const app=express();
-app.use(cors());//cross origin resource sharing
+const app = express();
+
+app.use(cors());
+
+// Middleware for Clerk Authentication (for non-webhook routes)
+app.use(clerkMiddleware());
+
+// Raw body parser for Clerk Webhooks (required for svix verification)
+app.post("/api/clerk", bodyParser.raw({ type: "*/*" }), clerkWebhooks);
+
+// JSON parser for other routes
 app.use(express.json());
-app.use(clerkMiddleware())
 
-app.use("/api/clerk",clerkWebhooks)
+// Default route
+app.get("/", (req, res) => {
+  res.send("Server is running");
+});
 
-app.get("/",(req,res)=>{
-    res.send("Server is running")
-})
-const PORT=process.env.PORT||3000;
-app.listen(PORT,()=>{
-    console.log(`Server is running on port ${PORT}`)
-})
-
-
-
- 
+// Start server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
