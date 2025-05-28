@@ -2,6 +2,7 @@ import User from "../models/User.js";
 import { Webhook } from "svix";
 
 const clerkWebhooks = async (req, res) => {
+    console.log("Received Clerk webhook");
     try {
         console.log("🔔 Clerk webhook received");
 
@@ -17,17 +18,22 @@ const clerkWebhooks = async (req, res) => {
 
         // Verify raw body (buffer)
         const payload = whook.verify(JSON.stringify(req.body), headers);
-        console.log("payload verified: ", payload)
+        console.log("✅ Webhook verified payload:", payload);
+
         const { data, type } = req.body;
+        console.log("req", req.body)
 
         // Prepare user data for MongoDB
         const userData = {
-            _id: data.id,
-            email: data.email_addresses[0].email_address,
-            username: `${data.first_name} ${data.last_name}`,
-            image: data.image_url,
+            _id: data?.id || "",
+            email: Array.isArray(data?.email_addresses) && data.email_addresses.length > 0
+                ? data.email_addresses[0].email_address
+                : "",
+            username: `${data?.first_name || ""} ${data?.last_name || ""}`.trim(),
+            image: data?.image_url || "",
         };
-        console.log("userdata",userData)
+
+        console.log(userData)
 
         // Handle webhook event types
         switch (type) {
@@ -38,11 +44,12 @@ const clerkWebhooks = async (req, res) => {
 
             case "user.updated":
                 await User.findByIdAndUpdate(data.id, userData, { new: true });
-                console.log("user deleted")
+                console.log("user updated")
                 return res.json({ success: true, message: "User updated" });
 
             case "user.deleted":
                 await User.findByIdAndDelete(data.id);
+                console.log("user deleted")
                 return res.json({ success: true, message: "User deleted" });
 
             default:
@@ -52,7 +59,6 @@ const clerkWebhooks = async (req, res) => {
         console.error("Webhook error:", error.message);
         return res.status(400).json({ success: false, message: error.message });
     }
-
 };
 
 export default clerkWebhooks;
