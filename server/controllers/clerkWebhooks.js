@@ -17,7 +17,7 @@ const clerkWebhooks = async (req, res) => {
 
         // Verify raw body (buffer)
         const payload = whook.verify(JSON.stringify(req.body), headers);
-        console.log("payload verified: ",payload)
+        console.log("payload verified: ", payload)
         const { data, type } = req.body;
 
         // Prepare user data for MongoDB
@@ -27,15 +27,18 @@ const clerkWebhooks = async (req, res) => {
             username: `${data.first_name} ${data.last_name}`,
             image: data.image_url,
         };
+        console.log("userdata",userData)
 
         // Handle webhook event types
         switch (type) {
             case "user.created":
                 await User.create(userData);
+                console.log("user created")
                 return res.json({ success: true, message: "User created" });
 
             case "user.updated":
                 await User.findByIdAndUpdate(data.id, userData, { new: true });
+                console.log("user deleted")
                 return res.json({ success: true, message: "User updated" });
 
             case "user.deleted":
@@ -49,7 +52,7 @@ const clerkWebhooks = async (req, res) => {
         console.error("Webhook error:", error.message);
         return res.status(400).json({ success: false, message: error.message });
     }
-   
+
 };
 
 export default clerkWebhooks;
