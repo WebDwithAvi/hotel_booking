@@ -4,6 +4,7 @@ import { Webhook } from "svix";
 const clerkWebhooks = async (req, res) => {
     try {
         console.log("🔔 Clerk webhook received");
+        console.log("ed");
 
         // Prepare webhook verifier
         const whook = new Webhook(process.env.CLERK_WEBHOOK_SECRET);
@@ -49,6 +50,7 @@ const clerkWebhooks = async (req, res) => {
         console.error("Webhook error:", error.message);
         return res.status(400).json({ success: false, message: error.message });
     }
+   
 };
 
 export default clerkWebhooks;
