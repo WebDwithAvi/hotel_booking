@@ -4,7 +4,6 @@ import { Webhook } from "svix";
 const clerkWebhooks = async (req, res) => {
     try {
         console.log("🔔 Clerk webhook received");
-        console.log("ed");
 
         // Prepare webhook verifier
         const whook = new Webhook(process.env.CLERK_WEBHOOK_SECRET);
@@ -17,9 +16,9 @@ const clerkWebhooks = async (req, res) => {
         };
 
         // Verify raw body (buffer)
-        const payload = whook.verify(req.body, headers);
-
-        const { data, type } = JSON.parse(payload);
+        const payload = whook.verify(JSON.stringify(req.body), headers);
+        console.log("payload verified: ",payload)
+        const { data, type } = req.body;
 
         // Prepare user data for MongoDB
         const userData = {
